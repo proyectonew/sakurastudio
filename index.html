@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Panel Caja - Sakura Studio</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body {
       margin: 0;
@@ -53,88 +54,132 @@
     <img src="logo-sakura.png" alt="Logo Sakura" class="logo" />
     <h2>Registro de Pago</h2>
 
-    <label>Monto en Bs</label>
-    <input type="number" id="montoBs" placeholder="Ej: 150" />
+    <label>Servicio</label>
+    <select id="servicio"></select>
+
+    <div class="result" id="precioUSD">Precio en USD: $0.00</div>
 
     <label>Tasa del día</label>
-    <input type="number" id="tasa" placeholder="Ej: 38.5" />
+    <div class="result" id="tasaVisual">Cargando...</div>
 
-    <div class="result" id="montoUSD">Monto en USD: $0.00</div>
+    <label>Propina en USD</label>
+    <input type="number" id="propinaUSD" placeholder="Ej: 2.00" />
+
+    <label>Propina en Bs</label>
+    <input type="number" id="propinaBS" placeholder="Ej: 20.00" />
+
+    <div class="result" id="totalBs">Total en Bs: Bs 0.00</div>
 
     <label>Método de pago</label>
     <select id="metodo">
       <option value="efectivo">Efectivo</option>
-      <option value="transferencia">Transferencia</option>
-      <option value="punto">Punto</option>
       <option value="pago_movil">Pago Móvil</option>
+      <option value="transferencia">Transferencia</option>
     </select>
 
     <label>Referencia</label>
     <input type="text" id="referencia" placeholder="Obligatorio si no es efectivo" />
 
-    <label>Cliente</label>
-    <input type="text" id="cliente" placeholder="Nombre o ID" />
+    <label>Clienta ID</label>
+    <input type="text" id="clienta" placeholder="UUID o dejar vacío" />
 
-    <label>Trabajadora</label>
-    <input type="text" id="trabajadora" placeholder="Nombre o ID" />
-
-    <label>Servicio</label>
-    <input type="text" id="servicio" placeholder="Ej: Masaje 1h" />
-
-    <label>Observaciones</label>
-    <input type="text" id="observaciones" placeholder="Opcional" />
+    <label>Trabajadora ID</label>
+    <input type="text" id="trabajadora" placeholder="UUID de trabajadora" />
 
     <button onclick="registrarPago()">Registrar Pago</button>
     <div id="feedback"></div>
   </div>
 
   <script>
-    const montoBs = document.getElementById('montoBs');
-    const tasa = document.getElementById('tasa');
-    const montoUSD = document.getElementById('montoUSD');
+    const supabase = supabase.createClient(
+      'https://whsyicvodgtmhsoynyrc.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indoc3lpY3ZvZGd0bWhzb3lueXJjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY5NTI5MDcsImV4cCI6MjA3MjUyODkwN30.8NdIOa08ntLFriC4wOWhyMcOmF4Q3fLcG1rwcnZffOE'
+    );
 
-    montoBs.addEventListener('input', calcularUSD);
-    tasa.addEventListener('input', calcularUSD);
+    let servicios = [];
+    let tasa = 0;
 
-    function calcularUSD() {
-      const bs = parseFloat(montoBs.value);
-      const rate = parseFloat(tasa.value);
-      if (!isNaN(bs) && !isNaN(rate)) {
-        const usd = (bs / rate).toFixed(2);
-        montoUSD.textContent = `Monto en USD: $${usd}`;
-      }
+    async function cargarServicios() {
+      const { data } = await supabase.from('servicios').select('*').eq('activo', true);
+      servicios = data || [];
+      const selector = document.getElementById('servicio');
+      selector.innerHTML = '';
+      servicios.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.nombre;
+        opt.textContent = `${s.nombre} - $${s.precio_usd}`;
+        opt.setAttribute('data-precio', s.precio_usd);
+        selector.appendChild(opt);
+      });
+      actualizarPrecio();
     }
+
+    async function cargarTasa() {
+      const { data } = await supabase
+        .from('tasa_dia')
+        .select('tasa_bs_por_usd')
+        .eq('tipo_uso', 'operativo')
+        .order('fecha', { ascending: false })
+        .limit(1)
+        .single();
+      tasa = data?.tasa_bs_por_usd || 0;
+      document.getElementById('tasaVisual').textContent = `${tasa} Bs/USD`;
+      actualizarTotal();
+    }
+
+    function actualizarPrecio() {
+      const selector = document.getElementById('servicio');
+      const precio = selector.selectedOptions[0]?.getAttribute('data-precio') || 0;
+      document.getElementById('precioUSD').textContent = `Precio en USD: $${precio}`;
+      actualizarTotal();
+    }
+
+    function actualizarTotal() {
+      const selector = document.getElementById('servicio');
+      const precio = parseFloat(selector.selectedOptions[0]?.getAttribute('data-precio') || 0);
+      const propinaUSD = parseFloat(document.getElementById('propinaUSD').value) || 0;
+      const propinaBS = parseFloat(document.getElementById('propinaBS').value) || 0;
+      const totalBs = ((precio + propinaUSD) * tasa + propinaBS).toFixed(2);
+      document.getElementById('totalBs').textContent = `Total en Bs: Bs ${totalBs}`;
+    }
+
+    document.getElementById('servicio').addEventListener('change', actualizarPrecio);
+    document.getElementById('propinaUSD').addEventListener('input', actualizarTotal);
+    document.getElementById('propinaBS').addEventListener('input', actualizarTotal);
 
     async function registrarPago() {
-      const payload = {
-        monto_bs: parseFloat(montoBs.value),
-        tasa: parseFloat(tasa.value),
-        metodo: document.getElementById('metodo').value,
-        referencia: document.getElementById('referencia').value,
-        cliente: document.getElementById('cliente').value,
-        trabajadora: document.getElementById('trabajadora').value,
-        servicio: document.getElementById('servicio').value,
-        observaciones: document.getElementById('observaciones').value
-      };
+      const servicio = document.getElementById('servicio').value;
+      const precio = parseFloat(document.getElementById('servicio').selectedOptions[0]?.getAttribute('data-precio') || 0);
+      const propinaUSD = parseFloat(document.getElementById('propinaUSD').value) || 0;
+      const propinaBS = parseFloat(document.getElementById('propinaBS').value) || 0;
+      const metodo = document.getElementById('metodo').value;
+      const referencia = document.getElementById('referencia').value;
+      const clienta = document.getElementById('clienta').value || null;
+      const trabajadora = document.getElementById('trabajadora').value;
 
-      try {
-        const res = await fetch('https://whsyicvodgtmhsoynyrc.supabase.co/functions/v1/registrar_pago', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indoc3lpY3ZvZGd0bWhzb3lueXJjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY5NTI5MDcsImV4cCI6MjA3MjUyODkwN30.8NdIOa08ntLFriC4wOWhyMcOmF4Q3fLcG1rwcnZffOE'
-          },
-          body: JSON.stringify(payload)
-        });
+      const { error } = await supabase.rpc('registrar_pago', {
+        clienta,
+        trabajadora,
+        servicio,
+        monto_usd: precio,
+        moneda: 'bs',
+        metodo_pago: metodo,
+        referencia,
+        propina_usd: propinaUSD,
+        propina_bs: propinaBS,
+        tasa
+      });
 
-        const result = await res.json();
-        document.getElementById('feedback').textContent = '✅ Pago registrado correctamente';
-        console.log('Respuesta:', result);
-      } catch (err) {
+      if (error) {
         document.getElementById('feedback').textContent = '❌ Error al registrar el pago';
-        console.error('Error:', err);
+        console.error(error);
+      } else {
+        document.getElementById('feedback').textContent = '✅ Pago registrado correctamente';
       }
     }
+
+    cargarServicios();
+    cargarTasa();
   </script>
 </body>
 </html>
