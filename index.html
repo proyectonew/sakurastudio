@@ -59,6 +59,13 @@
 
     <div class="result" id="precioUSD">Precio en USD: $0.00</div>
 
+    <label>
+  <input type="checkbox" id="usarOtroPrecio" />
+  Usar otro precio
+</label>
+
+<input type="number" id="precioManual" placeholder="Precio personalizado en USD" style="display:none;" />
+    
     <label>Tasa del día</label>
     <div class="result" id="tasaVisual">Cargando...</div>
 
@@ -143,16 +150,32 @@
       actualizarTotal();
     }
 
+  document.getElementById('usarOtroPrecio').addEventListener('change', () => {
+  const manual = document.getElementById('precioManual');
+  manual.style.display = usarOtroPrecio.checked ? 'block' : 'none';
+  actualizarTotal();
+});
+
+function obtenerPrecioUSD() {
+  const usarManual = document.getElementById('usarOtroPrecio').checked;
+  if (usarManual) {
+    return parseFloat(document.getElementById('precioManual').value) || 0;
+  } else {
+    const selector = document.getElementById('servicio');
+    return parseFloat(selector.selectedOptions[0]?.getAttribute('data-precio') || 0);
+  }
+}
+    
     function actualizarPrecio() {
       const selector = document.getElementById('servicio');
-      const precio = selector.selectedOptions[0]?.getAttribute('data-precio') || 0;
-      document.getElementById('precioUSD').textContent = `Precio en USD: $${precio}`;
+      const precio = obtenerPrecioUSD();
+      document.getElementById('precioUSD').textContent = `Precio en USD: $${precio.toFixed(2)}`;
       actualizarTotal();
     }
 
     function actualizarTotal() {
       const selector = document.getElementById('servicio');
-      const precio = parseFloat(selector.selectedOptions[0]?.getAttribute('data-precio') || 0);
+      const precio = obtenerPrecioUSD();
       const propinaUSD = parseFloat(document.getElementById('propinaUSD').value) || 0;
       const propinaBS = parseFloat(document.getElementById('propinaBS').value) || 0;
       const totalBs = ((precio + propinaUSD) * tasa + propinaBS).toFixed(2);
@@ -165,7 +188,7 @@
 
     async function registrarPago() {
       const servicio = document.getElementById('servicio').value;
-      const precio = parseFloat(document.getElementById('servicio').selectedOptions[0]?.getAttribute('data-precio') || 0);
+      const precio = obtenerPrecioUSD();
       const propinaUSD = parseFloat(document.getElementById('propinaUSD').value) || 0;
       const propinaBS = parseFloat(document.getElementById('propinaBS').value) || 0;
       const metodo = document.getElementById('metodo').value;
