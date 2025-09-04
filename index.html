@@ -80,11 +80,11 @@
     <label>Referencia</label>
     <input type="text" id="referencia" placeholder="Obligatorio si no es efectivo" />
 
-    <label>Clienta ID</label>
+    <label>Cliente</label>
     <input type="text" id="clienta" placeholder="UUID o dejar vacío" />
 
-    <label>Trabajadora ID</label>
-    <input type="text" id="trabajadora" placeholder="UUID de trabajadora" />
+    <label>Trabajadora</label>
+<select id="trabajadora"></select>
 
     <button onclick="registrarPago()">Registrar Pago</button>
     <div id="feedback"></div>
@@ -113,6 +113,22 @@
       });
       actualizarPrecio();
     }
+
+  async function cargarTrabajadoras() {
+  const { data } = await supabase
+    .from('trabajadoras')
+    .select('id, nombre, rol')
+    .eq('activo', true);
+
+  const selector = document.getElementById('trabajadora');
+  selector.innerHTML = '';
+  data.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t.id;
+    opt.textContent = `${t.nombre} (${t.rol})`;
+    selector.appendChild(opt);
+  });
+        }
 
     async function cargarTasa() {
       const { data } = await supabase
@@ -179,7 +195,8 @@
     }
 
     cargarServicios();
-    cargarTasa();
+cargarTasa();
+cargarTrabajadoras();
   </script>
 </body>
 </html>
