@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel Caja - Sakura Studio</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background-image: url('fondo-sakura.jpg');
+      background-size: cover;
+      background-position: center;
+      color: #333;
+    }
+    .container {
+      max-width: 400px;
+      margin: auto;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 10px;
+      margin-top: 30px;
+    }
+    img.logo {
+      width: 100%;
+      max-width: 180px;
+      display: block;
+      margin: auto;
+      margin-bottom: 20px;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    button {
+      background-color: #e91e63;
+      color: white;
+      border: none;
+      font-weight: bold;
+    }
+    .result {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img src="logo-sakura.png" alt="Logo Sakura" class="logo" />
+    <h2>Registro de Pago</h2>
+
+    <label>Monto en Bs</label>
+    <input type="number" id="montoBs" placeholder="Ej: 150" />
+
+    <label>Tasa del día</label>
+    <input type="number" id="tasa" placeholder="Ej: 38.5" />
+
+    <div class="result" id="montoUSD">Monto en USD: $0.00</div>
+
+    <label>Método de pago</label>
+    <select id="metodo">
+      <option value="efectivo">Efectivo</option>
+      <option value="transferencia">Transferencia</option>
+      <option value="punto">Punto</option>
+      <option value="pago_movil">Pago Móvil</option>
+    </select>
+
+    <label>Referencia</label>
+    <input type="text" id="referencia" placeholder="Obligatorio si no es efectivo" />
+
+    <label>Cliente</label>
+    <input type="text" id="cliente" placeholder="Nombre o ID" />
+
+    <label>Trabajadora</label>
+    <input type="text" id="trabajadora" placeholder="Nombre o ID" />
+
+    <label>Servicio</label>
+    <input type="text" id="servicio" placeholder="Ej: Masaje 1h" />
+
+    <label>Observaciones</label>
+    <input type="text" id="observaciones" placeholder="Opcional" />
+
+    <button onclick="registrarPago()">Registrar Pago</button>
+    <div id="feedback"></div>
+  </div>
+
+  <script>
+    const montoBs = document.getElementById('montoBs');
+    const tasa = document.getElementById('tasa');
+    const montoUSD = document.getElementById('montoUSD');
+
+    montoBs.addEventListener('input', calcularUSD);
+    tasa.addEventListener('input', calcularUSD);
+
+    function calcularUSD() {
+      const bs = parseFloat(montoBs.value);
+      const rate = parseFloat(tasa.value);
+      if (!isNaN(bs) && !isNaN(rate)) {
+        const usd = (bs / rate).toFixed(2);
+        montoUSD.textContent = `Monto en USD: $${usd}`;
+      }
+    }
+
+    async function registrarPago() {
+      const payload = {
+        monto_bs: parseFloat(montoBs.value),
+        tasa: parseFloat(tasa.value),
+        metodo: document.getElementById('metodo').value,
+        referencia: document.getElementById('referencia').value,
+        cliente: document.getElementById('cliente').value,
+        trabajadora: document.getElementById('trabajadora').value,
+        servicio: document.getElementById('servicio').value,
+        observaciones: document.getElementById('observaciones').value
+      };
+
+      try {
+        const res = await fetch('https://whsyicvodgtmhsoynyrc.supabase.co/functions/v1/registrar_pago', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indoc3lpY3ZvZGd0bWhzb3lueXJjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY5NTI5MDcsImV4cCI6MjA3MjUyODkwN30.8NdIOa08ntLFriC4wOWhyMcOmF4Q3fLcG1rwcnZffOE'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await res.json();
+        document.getElementById('feedback').textContent = '✅ Pago registrado correctamente';
+        console.log('Respuesta:', result);
+      } catch (err) {
+        document.getElementById('feedback').textContent = '❌ Error al registrar el pago';
+        console.error('Error:', err);
+      }
+    }
+  </script>
+</body>
+</html>
