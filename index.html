@@ -150,7 +150,17 @@
       actualizarTotal();
     }
 
+    async function iniciarPanel() {
+  await supabase.rpc('actualizar_tasa_automatica');
+  await cargarTasa();
+  await cargarServicios();
+  await cargarTrabajadoras();
+}
+
+iniciarPanel();
+
   document.getElementById('usarOtroPrecio').addEventListener('change', () => {
+  const usarOtroPrecio = document.getElementById('usarOtroPrecio');
   const manual = document.getElementById('precioManual');
   manual.style.display = usarOtroPrecio.checked ? 'block' : 'none';
   actualizarTotal();
@@ -216,10 +226,6 @@ function obtenerPrecioUSD() {
         document.getElementById('feedback').textContent = '✅ Pago registrado correctamente';
       }
     }
-
-    cargarServicios();
-cargarTasa();
-cargarTrabajadoras();
   </script>
 </body>
 </html>
