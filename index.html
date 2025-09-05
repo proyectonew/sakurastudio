@@ -42,6 +42,11 @@
   <h2>🔍 Diagnóstico Sakura Studio</h2>
 
   <div class="box">
+    <strong>🔌 Conexión Supabase:</strong>
+    <div id="conexionStatus">Cargando...</div>
+  </div>
+
+  <div class="box">
     <strong>📦 Servicios activos:</strong>
     <div id="serviciosStatus">Cargando...</div>
     <pre id="serviciosData"></pre>
@@ -52,31 +57,32 @@
     <div id="tasaStatus">Cargando...</div>
     <pre id="tasaData"></pre>
   </div>
-
   <script>
     const supabase = supabase.createClient(
       'https://whsyicvodgtmhsoynyrc.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indoc3lpY3ZvZGd0bWhzb3lueXJjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY5NTI5MDcsImV4cCI6MjA3MjUyODkwN30.8NdIOa08ntLFriC4wOWhyMcOmF4Q3fLcG1rwcnZffOE'
     );
 
+    document.getElementById('conexionStatus').innerHTML = supabase ? '<span class="success">✅ Cliente creado correctamente</span>' : '<span class="error">❌ Falló la creación del cliente</span>';
+
     async function diagnosticarServicios() {
+      document.getElementById('serviciosStatus').textContent = '⏳ Ejecutando consulta...';
       const { data, error } = await supabase.from('servicios').select('*').eq('activo', true);
-      const status = document.getElementById('serviciosStatus');
-      const output = document.getElementById('serviciosData');
 
       if (error) {
-        status.innerHTML = '<span class="error">❌ Error al cargar servicios</span>';
-        output.textContent = error.message;
+        document.getElementById('serviciosStatus').innerHTML = '<span class="error">❌ Error al cargar servicios</span>';
+        document.getElementById('serviciosData').textContent = error.message;
       } else if (!data || data.length === 0) {
-        status.innerHTML = '<span class="error">⚠️ No hay servicios activos</span>';
-        output.textContent = '[]';
+        document.getElementById('serviciosStatus').innerHTML = '<span class="error">⚠️ No hay servicios activos</span>';
+        document.getElementById('serviciosData').textContent = '[]';
       } else {
-        status.innerHTML = '<span class="success">✅ Servicios cargados correctamente</span>';
-        output.textContent = JSON.stringify(data, null, 2);
+        document.getElementById('serviciosStatus').innerHTML = `<span class="success">✅ ${data.length} servicios cargados</span>`;
+        document.getElementById('serviciosData').textContent = JSON.stringify(data, null, 2);
       }
     }
 
     async function diagnosticarTasa() {
+      document.getElementById('tasaStatus').textContent = '⏳ Ejecutando consulta...';
       const { data, error } = await supabase
         .from('tasa_dia')
         .select('*')
@@ -85,18 +91,15 @@
         .limit(1)
         .single();
 
-      const status = document.getElementById('tasaStatus');
-      const output = document.getElementById('tasaData');
-
       if (error) {
-        status.innerHTML = '<span class="error">❌ Error al cargar tasa</span>';
-        output.textContent = error.message;
+        document.getElementById('tasaStatus').innerHTML = '<span class="error">❌ Error al cargar tasa</span>';
+        document.getElementById('tasaData').textContent = error.message;
       } else if (!data || !data.tasa_bs_por_usd) {
-        status.innerHTML = '<span class="error">⚠️ No hay tasa registrada</span>';
-        output.textContent = JSON.stringify(data, null, 2);
+        document.getElementById('tasaStatus').innerHTML = '<span class="error">⚠️ No hay tasa registrada</span>';
+        document.getElementById('tasaData').textContent = JSON.stringify(data, null, 2);
       } else {
-        status.innerHTML = '<span class="success">✅ Tasa cargada correctamente</span>';
-        output.textContent = JSON.stringify(data, null, 2);
+        document.getElementById('tasaStatus').innerHTML = `<span class="success">✅ Tasa: ${data.tasa_bs_por_usd} Bs/USD</span>`;
+        document.getElementById('tasaData').textContent = JSON.stringify(data, null, 2);
       }
     }
 
