@@ -159,10 +159,15 @@
 
 iniciarPanel();
 
-  document.getElementById('usarOtroPrecio').addEventListener('change', () => {
-  const usarOtroPrecio = document.getElementById('usarOtroPrecio');
-  const manual = document.getElementById('precioManual');
-  manual.style.display = usarOtroPrecio.checked ? 'block' : 'none';
+  const usarOtroPrecioCheckbox = document.getElementById('usarOtroPrecio');
+const precioManualInput = document.getElementById('precioManual');
+
+usarOtroPrecioCheckbox.addEventListener('change', () => {
+  if (usarOtroPrecioCheckbox.checked) {
+    precioManualInput.style.display = 'block';
+  } else {
+    precioManualInput.style.display = 'none';
+  }
   actualizarTotal();
 });
 
