@@ -59,18 +59,13 @@
 
     <div class="result" id="precioUSD">Precio en USD: $0.00</div>
 
-    <label>Tasa del día (manual)</label>
-<input type="number" id="tasaManual" placeholder="Ej: 38.50" />
-<button onclick="registrarTasaManual()">Registrar tasa</button>
-<div id="tasaFeedback"></div>
-    
     <label>
       <input type="checkbox" id="usarOtroPrecio" />
       Usar otro precio
     </label>
 
     <input type="number" id="precioManual" placeholder="Precio personalizado en USD" style="display:none;" />
-    
+
     <label>Tasa del día</label>
     <div class="result" id="tasaVisual">Cargando...</div>
 
@@ -97,6 +92,11 @@
 
     <label>Trabajadora</label>
     <select id="trabajadora"></select>
+
+    <label>Tasa del día (manual)</label>
+    <input type="number" id="tasaManual" placeholder="Ej: 38.50" />
+    <button onclick="registrarTasaManual()">Registrar tasa</button>
+    <div id="tasaFeedback" class="result"></div>
 
     <button onclick="registrarPago()">Registrar Pago</button>
     <div id="feedback"></div>
@@ -129,7 +129,7 @@
       data.forEach(s => {
         const opt = document.createElement('option');
         opt.value = s.id;
-        opt.textContent = ${s.nombre} - $${parseFloat(s.precio_usd).toFixed(2)};
+        opt.textContent = `${s.nombre} - $${parseFloat(s.precio_usd).toFixed(2)}`;
         opt.setAttribute('data-precio', parseFloat(s.precio_usd));
         selector.appendChild(opt);
       });
@@ -138,39 +138,65 @@
     }
 
     async function cargarTrabajadoras() {
-      const { data } = await supabase
-        .from('trabajadoras')
-        .select('id, nombre, rol')
-        .eq('activo', true);
+      const { data, error } = await supabase.from('trabajadoras').select('id, nombre').eq('activo', true);
+      if (error) {
+        console.error('Error al cargar trabajadoras:', error.message);
+        document.getElementById('trabajadora').innerHTML = '<option>Error al cargar</option>';
+        return;
+      }
 
       const selector = document.getElementById('trabajadora');
       selector.innerHTML = '';
       data.forEach(t => {
         const opt = document.createElement('option');
         opt.value = t.id;
-        opt.textContent = ${t.nombre} (${t.rol});
+        opt.textContent = `${t.nombre}`;
         selector.appendChild(opt);
       });
     }
 
     async function cargarTasa() {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('tasa_dia')
-        .select('tasabspor_usd')
+        .select('tasa_bs_por_usd')
         .eq('tipo_uso', 'operativo')
         .order('fecha', { ascending: false })
         .limit(1)
         .single();
-      tasa = data?.tasabspor_usd || 0;
-      document.getElementById('tasaVisual').textContent = ${tasa} Bs/USD;
+
+      if (error) {
+        console.error('Error al cargar tasa:', error.message);
+        document.getElementById('tasaVisual').textContent = 'Error al cargar tasa';
+        return;
+      }
+
+      tasa = data?.tasa_bs_por_usd || 0;
+      document.getElementById('tasaVisual').textContent = `${tasa} Bs/USD`;
       actualizarTotal();
     }
 
-    async function iniciarPanel() {
-      const { error } = await supabase.rpc('actualizartasaautomatica');
-      if (error) {
-        console.error('Error al actualizar tasa automática:', error.message);
+    async function registrarTasaManual() {
+      const tasaInput = parseFloat(document.getElementById('tasaManual').value);
+      if (!tasaInput || tasaInput <= 0) {
+        document.getElementById('tasaFeedback').textContent = '❌ Tasa inválida';
+        return;
       }
+
+      const { error } = await supabase.rpc('registrar_tasa_manual', {
+        fuente: 'monitor',
+        tasa_bs_por_usd: tasaInput
+      });
+
+      if (error) {
+        document.getElementById('tasaFeedback').textContent = '❌ Error al registrar tasa';
+        console.error(error);
+      } else {
+        document.getElementById('tasaFeedback').textContent = '✅ Tasa registrada correctamente';
+        await cargarTasa();
+      }
+    }
+
+    async function iniciarPanel() {
       await cargarTasa();
       await cargarServicios();
       await cargarTrabajadoras();
@@ -188,8 +214,6 @@
 
     precioManualInput.addEventListener('input', actualizarPrecio);
 
-    document.getElementById('precioManual').addEventListener('input', actualizarPrecio);
-
     function obtenerPrecioUSD() {
       const usarManual = document.getElementById('usarOtroPrecio').checked;
       if (usarManual) {
@@ -200,30 +224,9 @@
       }
     }
 
-    async function registrarTasaManual() {
-  const tasaInput = parseFloat(document.getElementById('tasaManual').value);
-  if (!tasaInput || tasaInput <= 0) {
-    document.getElementById('tasaFeedback').textContent = '❌ Tasa inválida';
-    return;
-  }
-
-  const { error } = await supabase.rpc('registrar_tasa_manual', {
-    fuente: 'monitor',
-    tasa_bs_por_usd: tasaInput
-  });
-
-  if (error) {
-    document.getElementById('tasaFeedback').textContent = '❌ Error al registrar tasa';
-    console.error(error);
-  } else {
-    document.getElementById('tasaFeedback').textContent = '✅ Tasa registrada correctamente';
-    await cargarTasa(); // refresca visual
-  }
-      }
-
-    function actualizarPrecio() {
+      function actualizarPrecio() {
       const precio = obtenerPrecioUSD();
-      document.getElementById('precioUSD').textContent = Precio en USD: $${precio.toFixed(2)};
+      document.getElementById('precioUSD').textContent = `Precio en USD: $${precio.toFixed(2)}`;
       actualizarTotal();
     }
 
@@ -232,7 +235,7 @@
       const propinaUSD = parseFloat(document.getElementById('propinaUSD').value) || 0;
       const propinaBS = parseFloat(document.getElementById('propinaBS').value) || 0;
       const totalBs = ((precio + propinaUSD) * tasa + propinaBS).toFixed(2);
-      document.getElementById('totalBs').textContent = Total en Bs: Bs ${totalBs};
+      document.getElementById('totalBs').textContent = `Total en Bs: Bs ${totalBs}`;
     }
 
     document.getElementById('servicio').addEventListener('change', actualizarPrecio);
@@ -244,7 +247,7 @@
       const servicioNombre = document.getElementById('servicio').selectedOptions[0]?.textContent.split(' - $')[0] || '';
       const precio = obtenerPrecioUSD();
       const propinaUSD = parseFloat(document.getElementById('propinaUSD').value) || 0;
-      const propinaBS = parseFloat(document.getElementById('prop
+      const propinaBS = parseFloat(document.getElementById('propinaBS').value) || 0;
       const metodo = document.getElementById('metodo').value;
       const referencia = document.getElementById('referencia').value;
       const clienta = document.getElementById('clienta').value || null;
