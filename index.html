@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Diagnóstico Sakura Studio</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>Diagnóstico Simulado Sakura Studio</title>
   <style>
     body {
       font-family: sans-serif;
@@ -23,10 +22,6 @@
       margin-bottom: 20px;
       border-radius: 8px;
     }
-    .error {
-      color: red;
-      font-weight: bold;
-    }
     .success {
       color: green;
       font-weight: bold;
@@ -39,72 +34,35 @@
   </style>
 </head>
 <body>
-  <h2>🔍 Diagnóstico Sakura Studio</h2>
-
-  <div class="box">
-    <strong>🔌 Conexión Supabase:</strong>
-    <div id="conexionStatus">Cargando...</div>
-  </div>
+  <h2>🔍 Diagnóstico Simulado Sakura Studio</h2>
 
   <div class="box">
     <strong>📦 Servicios activos:</strong>
-    <div id="serviciosStatus">Cargando...</div>
+    <div class="success">✅ Simulación exitosa</div>
     <pre id="serviciosData"></pre>
   </div>
 
   <div class="box">
     <strong>💱 Tasa del día:</strong>
-    <div id="tasaStatus">Cargando...</div>
+    <div class="success">✅ Simulación exitosa</div>
     <pre id="tasaData"></pre>
   </div>
   <script>
-    const supabase = supabase.createClient(
-      'https://whsyicvodgtmhsoynyrc.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indoc3lpY3ZvZGd0bWhzb3lueXJjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY5NTI5MDcsImV4cCI6MjA3MjUyODkwN30.8NdIOa08ntLFriC4wOWhyMcOmF4Q3fLcG1rwcnZffOE'
-    );
+    const serviciosSimulados = [
+      { nombre: "Diseño de Cejas", precio_usd: 15.00 },
+      { nombre: "Manos Tradicional", precio_usd: 10.00 },
+      { nombre: "Pestañas por Punto", precio_usd: 12.00 }
+    ];
 
-    document.getElementById('conexionStatus').innerHTML = supabase ? '<span class="success">✅ Cliente creado correctamente</span>' : '<span class="error">❌ Falló la creación del cliente</span>';
+    const tasaSimulada = {
+      fecha: "2025-09-05",
+      fuente: "monitor",
+      tasa_bs_por_usd: 38.50,
+      tipo_uso: "operativo"
+    };
 
-    async function diagnosticarServicios() {
-      document.getElementById('serviciosStatus').textContent = '⏳ Ejecutando consulta...';
-      const { data, error } = await supabase.from('servicios').select('*').eq('activo', true);
-
-      if (error) {
-        document.getElementById('serviciosStatus').innerHTML = '<span class="error">❌ Error al cargar servicios</span>';
-        document.getElementById('serviciosData').textContent = error.message;
-      } else if (!data || data.length === 0) {
-        document.getElementById('serviciosStatus').innerHTML = '<span class="error">⚠️ No hay servicios activos</span>';
-        document.getElementById('serviciosData').textContent = '[]';
-      } else {
-        document.getElementById('serviciosStatus').innerHTML = `<span class="success">✅ ${data.length} servicios cargados</span>`;
-        document.getElementById('serviciosData').textContent = JSON.stringify(data, null, 2);
-      }
-    }
-
-    async function diagnosticarTasa() {
-      document.getElementById('tasaStatus').textContent = '⏳ Ejecutando consulta...';
-      const { data, error } = await supabase
-        .from('tasa_dia')
-        .select('*')
-        .eq('tipo_uso', 'operativo')
-        .order('fecha', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (error) {
-        document.getElementById('tasaStatus').innerHTML = '<span class="error">❌ Error al cargar tasa</span>';
-        document.getElementById('tasaData').textContent = error.message;
-      } else if (!data || !data.tasa_bs_por_usd) {
-        document.getElementById('tasaStatus').innerHTML = '<span class="error">⚠️ No hay tasa registrada</span>';
-        document.getElementById('tasaData').textContent = JSON.stringify(data, null, 2);
-      } else {
-        document.getElementById('tasaStatus').innerHTML = `<span class="success">✅ Tasa: ${data.tasa_bs_por_usd} Bs/USD</span>`;
-        document.getElementById('tasaData').textContent = JSON.stringify(data, null, 2);
-      }
-    }
-
-    diagnosticarServicios();
-    diagnosticarTasa();
+    document.getElementById('serviciosData').textContent = JSON.stringify(serviciosSimulados, null, 2);
+    document.getElementById('tasaData').textContent = JSON.stringify(tasaSimulada, null, 2);
   </script>
 </body>
 </html>
