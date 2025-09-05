@@ -107,18 +107,29 @@
     let tasa = 0;
 
     async function cargarServicios() {
-      const { data } = await supabase.from('servicios').select('*').eq('activo', true);
-      servicios = data || [];
-      const selector = document.getElementById('servicio');
-      selector.innerHTML = '';
-      servicios.forEach(s => {
-        const opt = document.createElement('option');
-        opt.value = s.nombre;
-        opt.textContent = `${s.nombre} - $${s.precio_usd}`;
-        opt.setAttribute('data-precio', s.precio_usd);
-        selector.appendChild(opt);
-      });
-      actualizarPrecio();
+  const { data, error } = await supabase.from('servicios').select('*').eq('activo', true);
+  if (error) {
+    console.error('Error al cargar servicios:', error.message);
+    document.getElementById('servicio').innerHTML = '<option>Error al cargar</option>';
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    document.getElementById('servicio').innerHTML = '<option>No hay servicios activos</option>';
+    return;
+  }
+
+  const selector = document.getElementById('servicio');
+  selector.innerHTML = '';
+  data.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s.id;
+    opt.textContent = `${s.nombre} - $${parseFloat(s.precio_usd).toFixed(2)}`;
+    opt.setAttribute('data-precio', parseFloat(s.precio_usd));
+    selector.appendChild(opt);
+  });
+
+  actualizarPrecio();
     }
 
   async function cargarTrabajadoras() {
