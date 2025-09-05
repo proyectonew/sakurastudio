@@ -163,14 +163,12 @@ iniciarPanel();
 const precioManualInput = document.getElementById('precioManual');
 
 usarOtroPrecioCheckbox.addEventListener('change', () => {
-  if (usarOtroPrecioCheckbox.checked) {
-    precioManualInput.style.display = 'block';
-  } else {
-    precioManualInput.style.display = 'none';
-  }
-  actualizarTotal();
+  precioManualInput.style.display = usarOtroPrecioCheckbox.checked ? 'block' : 'none';
+  actualizarPrecio(); // no actualizarTotal directamente
 });
 
+  precioManualInput.addEventListener('input', actualizarPrecio);
+    
 function obtenerPrecioUSD() {
   const usarManual = document.getElementById('usarOtroPrecio').checked;
   if (usarManual) {
