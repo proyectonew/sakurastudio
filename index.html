@@ -151,11 +151,14 @@
     }
 
     async function iniciarPanel() {
-  await supabase.rpc('actualizar_tasa_automatica');
+  const { error } = await supabase.rpc('actualizar_tasa_automatica');
+  if (error) {
+    console.error('Error al actualizar tasa automática:', error.message);
+  }
   await cargarTasa();
   await cargarServicios();
   await cargarTrabajadoras();
-}
+    }
 
 iniciarPanel();
 
@@ -168,6 +171,8 @@ usarOtroPrecioCheckbox.addEventListener('change', () => {
 });
 
   precioManualInput.addEventListener('input', actualizarPrecio);
+
+  document.getElementById('precioManual').addEventListener('input', actualizarPrecio);
     
 function obtenerPrecioUSD() {
   const usarManual = document.getElementById('usarOtroPrecio').checked;
