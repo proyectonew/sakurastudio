@@ -60,11 +60,11 @@
     <div class="result" id="precioUSD">Precio en USD: $0.00</div>
 
     <label>
-  <input type="checkbox" id="usarOtroPrecio" />
-  Usar otro precio
-</label>
+      <input type="checkbox" id="usarOtroPrecio" />
+      Usar otro precio
+    </label>
 
-<input type="number" id="precioManual" placeholder="Precio personalizado en USD" style="display:none;" />
+    <input type="number" id="precioManual" placeholder="Precio personalizado en USD" style="display:none;" />
     
     <label>Tasa del día</label>
     <div class="result" id="tasaVisual">Cargando...</div>
@@ -91,7 +91,7 @@
     <input type="text" id="clienta" placeholder="UUID o dejar vacío" />
 
     <label>Trabajadora</label>
-<select id="trabajadora"></select>
+    <select id="trabajadora"></select>
 
     <button onclick="registrarPago()">Registrar Pago</button>
     <div id="feedback"></div>
@@ -107,46 +107,46 @@
     let tasa = 0;
 
     async function cargarServicios() {
-  const { data, error } = await supabase.from('servicios').select('*').eq('activo', true);
-  if (error) {
-    console.error('Error al cargar servicios:', error.message);
-    document.getElementById('servicio').innerHTML = '<option>Error al cargar</option>';
-    return;
-  }
+      const { data, error } = await supabase.from('servicios').select('*').eq('activo', true);
+      if (error) {
+        console.error('Error al cargar servicios:', error.message);
+        document.getElementById('servicio').innerHTML = '<option>Error al cargar</option>';
+        return;
+      }
 
-  if (!data || data.length === 0) {
-    document.getElementById('servicio').innerHTML = '<option>No hay servicios activos</option>';
-    return;
-  }
+      if (!data || data.length === 0) {
+        document.getElementById('servicio').innerHTML = '<option>No hay servicios activos</option>';
+        return;
+      }
 
-  const selector = document.getElementById('servicio');
-  selector.innerHTML = '';
-  data.forEach(s => {
-    const opt = document.createElement('option');
-    opt.value = s.id;
-    opt.textContent = `${s.nombre} - $${parseFloat(s.precio_usd).toFixed(2)}`;
-    opt.setAttribute('data-precio', parseFloat(s.precio_usd));
-    selector.appendChild(opt);
-  });
+      const selector = document.getElementById('servicio');
+      selector.innerHTML = '';
+      data.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = `${s.nombre} - $${parseFloat(s.precio_usd).toFixed(2)}`;
+        opt.setAttribute('data-precio', parseFloat(s.precio_usd));
+        selector.appendChild(opt);
+      });
 
-  actualizarPrecio();
+      actualizarPrecio();
     }
 
-  async function cargarTrabajadoras() {
-  const { data } = await supabase
-    .from('trabajadoras')
-    .select('id, nombre, rol')
-    .eq('activo', true);
+    async function cargarTrabajadoras() {
+      const { data } = await supabase
+        .from('trabajadoras')
+        .select('id, nombre, rol')
+        .eq('activo', true);
 
-  const selector = document.getElementById('trabajadora');
-  selector.innerHTML = '';
-  data.forEach(t => {
-    const opt = document.createElement('option');
-    opt.value = t.id;
-    opt.textContent = `${t.nombre} (${t.rol})`;
-    selector.appendChild(opt);
-  });
-        }
+      const selector = document.getElementById('trabajadora');
+      selector.innerHTML = '';
+      data.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = `${t.nombre} (${t.rol})`;
+        selector.appendChild(opt);
+      });
+    }
 
     async function cargarTasa() {
       const { data } = await supabase
@@ -162,48 +162,46 @@
     }
 
     async function iniciarPanel() {
-  const { error } = await supabase.rpc('actualizar_tasa_automatica');
-  if (error) {
-    console.error('Error al actualizar tasa automática:', error.message);
-  }
-  await cargarTasa();
-  await cargarServicios();
-  await cargarTrabajadoras();
+      const { error } = await supabase.rpc('actualizar_tasa_automatica');
+      if (error) {
+        console.error('Error al actualizar tasa automática:', error.message);
+      }
+      await cargarTasa();
+      await cargarServicios();
+      await cargarTrabajadoras();
     }
 
-iniciarPanel();
+    iniciarPanel();
 
-  const usarOtroPrecioCheckbox = document.getElementById('usarOtroPrecio');
-const precioManualInput = document.getElementById('precioManual');
+    const usarOtroPrecioCheckbox = document.getElementById('usarOtroPrecio');
+    const precioManualInput = document.getElementById('precioManual');
 
-usarOtroPrecioCheckbox.addEventListener('change', () => {
-  precioManualInput.style.display = usarOtroPrecioCheckbox.checked ? 'block' : 'none';
-  actualizarPrecio(); // no actualizarTotal directamente
-});
+    usarOtroPrecioCheckbox.addEventListener('change', () => {
+      precioManualInput.style.display = usarOtroPrecioCheckbox.checked ? 'block' : 'none';
+      actualizarPrecio();
+    });
 
-  precioManualInput.addEventListener('input', actualizarPrecio);
+    precioManualInput.addEventListener('input', actualizarPrecio);
 
-  document.getElementById('precioManual').addEventListener('input', actualizarPrecio);
-    
-function obtenerPrecioUSD() {
-  const usarManual = document.getElementById('usarOtroPrecio').checked;
-  if (usarManual) {
-    return parseFloat(document.getElementById('precioManual').value) || 0;
-  } else {
-    const selector = document.getElementById('servicio');
-    return parseFloat(selector.selectedOptions[0]?.getAttribute('data-precio') || 0);
-  }
-}
-    
+    document.getElementById('precioManual').addEventListener('input', actualizarPrecio);
+
+    function obtenerPrecioUSD() {
+      const usarManual = document.getElementById('usarOtroPrecio').checked;
+      if (usarManual) {
+        return parseFloat(document.getElementById('precioManual').value) || 0;
+      } else {
+        const selector = document.getElementById('servicio');
+        return parseFloat(selector.selectedOptions[0]?.getAttribute('data-precio') || 0);
+      }
+    }
+
     function actualizarPrecio() {
-      const selector = document.getElementById('servicio');
       const precio = obtenerPrecioUSD();
       document.getElementById('precioUSD').textContent = `Precio en USD: $${precio.toFixed(2)}`;
       actualizarTotal();
     }
 
     function actualizarTotal() {
-      const selector = document.getElementById('servicio');
       const precio = obtenerPrecioUSD();
       const propinaUSD = parseFloat(document.getElementById('propinaUSD').value) || 0;
       const propinaBS = parseFloat(document.getElementById('propinaBS').value) || 0;
@@ -216,10 +214,11 @@ function obtenerPrecioUSD() {
     document.getElementById('propinaBS').addEventListener('input', actualizarTotal);
 
     async function registrarPago() {
-      const servicio = document.getElementById('servicio').value;
+      const servicioId = document.getElementById('servicio').value;
+      const servicioNombre = document.getElementById('servicio').selectedOptions[0]?.textContent.split(' - $')[0] || '';
       const precio = obtenerPrecioUSD();
       const propinaUSD = parseFloat(document.getElementById('propinaUSD').value) || 0;
-      const propinaBS = parseFloat(document.getElementById('propinaBS').value) || 0;
+      const propinaBS = parseFloat(document.getElementById('prop[43dcd9a7-70db-4a1f-b0ae-981daa162054](https://github.com/karames/curso-markdown-master/tree/9a65a17dd637e2be8fee24d6ea6c5558403d5487/markdown%2F100-codigo-fuente.md?citationMarker=43dcd9a7-70db-4a1f-b0ae-981daa162054 "1")
       const metodo = document.getElementById('metodo').value;
       const referencia = document.getElementById('referencia').value;
       const clienta = document.getElementById('clienta').value || null;
@@ -228,7 +227,7 @@ function obtenerPrecioUSD() {
       const { error } = await supabase.rpc('registrar_pago', {
         clienta,
         trabajadora,
-        servicio,
+        servicio: servicioNombre,
         monto_usd: precio,
         moneda: 'bs',
         metodo_pago: metodo,
