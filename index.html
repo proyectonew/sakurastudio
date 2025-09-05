@@ -3,98 +3,54 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Panel Caja - Sakura Studio</title>
+  <title>Diagnóstico Sakura Studio</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body {
-      margin: 0;
       font-family: sans-serif;
-      background-image: url('fondo-sakura.jpg');
-      background-size: cover;
-      background-position: center;
+      background: #f9f9f9;
+      padding: 20px;
       color: #333;
     }
-    .container {
-      max-width: 400px;
-      margin: auto;
-      padding: 20px;
-      background: rgba(255, 255, 255, 0.9);
-      border-radius: 10px;
-      margin-top: 30px;
-    }
-    img.logo {
-      width: 100%;
-      max-width: 180px;
-      display: block;
-      margin: auto;
+    h2 {
+      text-align: center;
       margin-bottom: 20px;
     }
-    input, select, button {
-      width: 100%;
-      padding: 10px;
-      margin: 8px 0;
-      border-radius: 5px;
+    .box {
+      background: #fff;
       border: 1px solid #ccc;
-      font-size: 16px;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 8px;
     }
-    button {
-      background-color: #e91e63;
-      color: white;
-      border: none;
+    .error {
+      color: red;
       font-weight: bold;
     }
-    .result {
-      margin-top: 10px;
+    .success {
+      color: green;
       font-weight: bold;
+    }
+    pre {
+      background: #eee;
+      padding: 10px;
+      overflow-x: auto;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <img src="logo-sakura.png" alt="Logo Sakura" class="logo" />
-    <h2>Registro de Pago</h2>
+  <h2>🔍 Diagnóstico Sakura Studio</h2>
 
-    <label>Servicio</label>
-    <select id="servicio"></select>
+  <div class="box">
+    <strong>📦 Servicios activos:</strong>
+    <div id="serviciosStatus">Cargando...</div>
+    <pre id="serviciosData"></pre>
+  </div>
 
-    <div class="result" id="precioUSD">Precio en USD: $0.00</div>
-
-    <label>
-      <input type="checkbox" id="usarOtroPrecio" />
-      Usar otro precio
-    </label>
-
-    <input type="number" id="precioManual" placeholder="Precio personalizado en USD" style="display:none;" />
-    
-    <label>Tasa del día</label>
-    <div class="result" id="tasaVisual">Cargando...</div>
-
-    <label>Propina en USD</label>
-    <input type="number" id="propinaUSD" placeholder="Ej: 2.00" />
-
-    <label>Propina en Bs</label>
-    <input type="number" id="propinaBS" placeholder="Ej: 20.00" />
-
-    <div class="result" id="totalBs">Total en Bs: Bs 0.00</div>
-
-    <label>Método de pago</label>
-    <select id="metodo">
-      <option value="efectivo">Efectivo</option>
-      <option value="pago_movil">Pago Móvil</option>
-      <option value="transferencia">Transferencia</option>
-    </select>
-
-    <label>Referencia</label>
-    <input type="text" id="referencia" placeholder="Obligatorio si no es efectivo" />
-
-    <label>Cliente</label>
-    <input type="text" id="clienta" placeholder="UUID o dejar vacío" />
-
-    <label>Trabajadora</label>
-    <select id="trabajadora"></select>
-
-    <button onclick="registrarPago()">Registrar Pago</button>
-    <div id="feedback"></div>
+  <div class="box">
+    <strong>💱 Tasa del día:</strong>
+    <div id="tasaStatus">Cargando...</div>
+    <pre id="tasaData"></pre>
   </div>
 
   <script>
@@ -103,147 +59,49 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indoc3lpY3ZvZGd0bWhzb3lueXJjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY5NTI5MDcsImV4cCI6MjA3MjUyODkwN30.8NdIOa08ntLFriC4wOWhyMcOmF4Q3fLcG1rwcnZffOE'
     );
 
-    let servicios = [];
-    let tasa = 0;
-
-    async function cargarServicios() {
+    async function diagnosticarServicios() {
       const { data, error } = await supabase.from('servicios').select('*').eq('activo', true);
+      const status = document.getElementById('serviciosStatus');
+      const output = document.getElementById('serviciosData');
+
       if (error) {
-        console.error('Error al cargar servicios:', error.message);
-        document.getElementById('servicio').innerHTML = '<option>Error al cargar</option>';
-        return;
+        status.innerHTML = '<span class="error">❌ Error al cargar servicios</span>';
+        output.textContent = error.message;
+      } else if (!data || data.length === 0) {
+        status.innerHTML = '<span class="error">⚠️ No hay servicios activos</span>';
+        output.textContent = '[]';
+      } else {
+        status.innerHTML = '<span class="success">✅ Servicios cargados correctamente</span>';
+        output.textContent = JSON.stringify(data, null, 2);
       }
-
-      if (!data || data.length === 0) {
-        document.getElementById('servicio').innerHTML = '<option>No hay servicios activos</option>';
-        return;
-      }
-
-      const selector = document.getElementById('servicio');
-      selector.innerHTML = '';
-      data.forEach(s => {
-        const opt = document.createElement('option');
-        opt.value = s.id;
-        opt.textContent = `${s.nombre} - $${parseFloat(s.precio_usd).toFixed(2)}`;
-        opt.setAttribute('data-precio', parseFloat(s.precio_usd));
-        selector.appendChild(opt);
-      });
-
-      actualizarPrecio();
     }
 
-    async function cargarTrabajadoras() {
-      const { data } = await supabase
-        .from('trabajadoras')
-        .select('id, nombre, rol')
-        .eq('activo', true);
-
-      const selector = document.getElementById('trabajadora');
-      selector.innerHTML = '';
-      data.forEach(t => {
-        const opt = document.createElement('option');
-        opt.value = t.id;
-        opt.textContent = `${t.nombre} (${t.rol})`;
-        selector.appendChild(opt);
-      });
-    }
-
-    async function cargarTasa() {
-      const { data } = await supabase
+    async function diagnosticarTasa() {
+      const { data, error } = await supabase
         .from('tasa_dia')
-        .select('tasa_bs_por_usd')
+        .select('*')
         .eq('tipo_uso', 'operativo')
         .order('fecha', { ascending: false })
         .limit(1)
         .single();
-      tasa = data?.tasa_bs_por_usd || 0;
-      document.getElementById('tasaVisual').textContent = `${tasa} Bs/USD`;
-      actualizarTotal();
-    }
 
-    async function iniciarPanel() {
-      const { error } = await supabase.rpc('actualizar_tasa_automatica');
-      if (error) {
-        console.error('Error al actualizar tasa automática:', error.message);
-      }
-      await cargarTasa();
-      await cargarServicios();
-      await cargarTrabajadoras();
-    }
-
-    iniciarPanel();
-
-    const usarOtroPrecioCheckbox = document.getElementById('usarOtroPrecio');
-    const precioManualInput = document.getElementById('precioManual');
-
-    usarOtroPrecioCheckbox.addEventListener('change', () => {
-      precioManualInput.style.display = usarOtroPrecioCheckbox.checked ? 'block' : 'none';
-      actualizarPrecio();
-    });
-
-    precioManualInput.addEventListener('input', actualizarPrecio);
-
-    document.getElementById('precioManual').addEventListener('input', actualizarPrecio);
-
-    function obtenerPrecioUSD() {
-      const usarManual = document.getElementById('usarOtroPrecio').checked;
-      if (usarManual) {
-        return parseFloat(document.getElementById('precioManual').value) || 0;
-      } else {
-        const selector = document.getElementById('servicio');
-        return parseFloat(selector.selectedOptions[0]?.getAttribute('data-precio') || 0);
-      }
-    }
-
-    function actualizarPrecio() {
-      const precio = obtenerPrecioUSD();
-      document.getElementById('precioUSD').textContent = `Precio en USD: $${precio.toFixed(2)}`;
-      actualizarTotal();
-    }
-
-    function actualizarTotal() {
-      const precio = obtenerPrecioUSD();
-      const propinaUSD = parseFloat(document.getElementById('propinaUSD').value) || 0;
-      const propinaBS = parseFloat(document.getElementById('propinaBS').value) || 0;
-      const totalBs = ((precio + propinaUSD) * tasa + propinaBS).toFixed(2);
-      document.getElementById('totalBs').textContent = `Total en Bs: Bs ${totalBs}`;
-    }
-
-    document.getElementById('servicio').addEventListener('change', actualizarPrecio);
-    document.getElementById('propinaUSD').addEventListener('input', actualizarTotal);
-    document.getElementById('propinaBS').addEventListener('input', actualizarTotal);
-
-    async function registrarPago() {
-      const servicioId = document.getElementById('servicio').value;
-      const servicioNombre = document.getElementById('servicio').selectedOptions[0]?.textContent.split(' - $')[0] || '';
-      const precio = obtenerPrecioUSD();
-      const propinaUSD = parseFloat(document.getElementById('propinaUSD').value) || 0;
-      const propinaBS = parseFloat(document.getElementById('prop[43dcd9a7-70db-4a1f-b0ae-981daa162054](https://github.com/karames/curso-markdown-master/tree/9a65a17dd637e2be8fee24d6ea6c5558403d5487/markdown%2F100-codigo-fuente.md?citationMarker=43dcd9a7-70db-4a1f-b0ae-981daa162054 "1")
-      const metodo = document.getElementById('metodo').value;
-      const referencia = document.getElementById('referencia').value;
-      const clienta = document.getElementById('clienta').value || null;
-      const trabajadora = document.getElementById('trabajadora').value;
-
-      const { error } = await supabase.rpc('registrar_pago', {
-        clienta,
-        trabajadora,
-        servicio: servicioNombre,
-        monto_usd: precio,
-        moneda: 'bs',
-        metodo_pago: metodo,
-        referencia,
-        propina_usd: propinaUSD,
-        propina_bs: propinaBS,
-        tasa
-      });
+      const status = document.getElementById('tasaStatus');
+      const output = document.getElementById('tasaData');
 
       if (error) {
-        document.getElementById('feedback').textContent = '❌ Error al registrar el pago';
-        console.error(error);
+        status.innerHTML = '<span class="error">❌ Error al cargar tasa</span>';
+        output.textContent = error.message;
+      } else if (!data || !data.tasa_bs_por_usd) {
+        status.innerHTML = '<span class="error">⚠️ No hay tasa registrada</span>';
+        output.textContent = JSON.stringify(data, null, 2);
       } else {
-        document.getElementById('feedback').textContent = '✅ Pago registrado correctamente';
+        status.innerHTML = '<span class="success">✅ Tasa cargada correctamente</span>';
+        output.textContent = JSON.stringify(data, null, 2);
       }
     }
+
+    diagnosticarServicios();
+    diagnosticarTasa();
   </script>
 </body>
 </html>
