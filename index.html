@@ -59,6 +59,11 @@
 
     <div class="result" id="precioUSD">Precio en USD: $0.00</div>
 
+    <label>Tasa del día (manual)</label>
+<input type="number" id="tasaManual" placeholder="Ej: 38.50" />
+<button onclick="registrarTasaManual()">Registrar tasa</button>
+<div id="tasaFeedback"></div>
+    
     <label>
       <input type="checkbox" id="usarOtroPrecio" />
       Usar otro precio
@@ -194,6 +199,27 @@
         return parseFloat(selector.selectedOptions[0]?.getAttribute('data-precio') || 0);
       }
     }
+
+    async function registrarTasaManual() {
+  const tasaInput = parseFloat(document.getElementById('tasaManual').value);
+  if (!tasaInput || tasaInput <= 0) {
+    document.getElementById('tasaFeedback').textContent = '❌ Tasa inválida';
+    return;
+  }
+
+  const { error } = await supabase.rpc('registrar_tasa_manual', {
+    fuente: 'monitor',
+    tasa_bs_por_usd: tasaInput
+  });
+
+  if (error) {
+    document.getElementById('tasaFeedback').textContent = '❌ Error al registrar tasa';
+    console.error(error);
+  } else {
+    document.getElementById('tasaFeedback').textContent = '✅ Tasa registrada correctamente';
+    await cargarTasa(); // refresca visual
+  }
+      }
 
     function actualizarPrecio() {
       const precio = obtenerPrecioUSD();
