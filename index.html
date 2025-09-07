@@ -93,10 +93,6 @@
     <label>Trabajadora</label>
     <select id="trabajadora"></select>
 
-    <label>Tasa del día (manual)</label>
-    <input type="number" id="tasaManual" placeholder="Ej: 38.50" />
-    <button onclick="registrarTasaManual()">Registrar tasa</button>
-    <div id="tasaFeedback" class="result"></div>
 
     <button onclick="registrarPago()">Registrar Pago</button>
     <div id="feedback"></div>
@@ -165,25 +161,6 @@
     actualizarTotal();
   }
 
-  async function registrarTasaManual() {
-    const tasaInput = parseFloat(document.getElementById('tasaManual').value);
-    if (!tasaInput || tasaInput <= 0) {
-      document.getElementById('tasaFeedback').textContent = '❌ Tasa inválida';
-      return;
-    }
-
-    const { error } = await supabase.rpc('registrar_tasa_manual', {
-      fuente: 'monitor',
-      tasa_bs_por_usd: tasaInput
-    });
-
-    if (error) {
-      document.getElementById('tasaFeedback').textContent = '❌ Error al registrar tasa';
-    } else {
-      document.getElementById('tasaFeedback').textContent = '✅ Tasa registrada correctamente';
-      await cargarTasa();
-    }
-  }
 
   function obtenerPrecioUSD() {
     const usarManual = document.getElementById('usarOtroPrecio').checked;
