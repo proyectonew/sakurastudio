@@ -77,6 +77,18 @@
 
     <div class="result" id="totalBs">Total en Bs: Bs 0.00</div>
 
+    <div id="vueltoContainer" style="display:none;">
+  <label>Monto entregado en USD</label>
+  <input type="number" id="montoEntregadoUSD" placeholder="Ej: 60.00" />
+
+  <label>Monto entregado en Bs</label>
+<input type="number" id="montoEntregadoBS" placeholder="Ej: 3000.00" />
+<div class="result" id="estadoPago">Estado del pago: —</div>
+      
+  <div class="result" id="vueltoUSD">Vuelto en USD: $0.00</div>
+  <div class="result" id="vueltoBS">Vuelto en Bs: Bs 0.00</div>
+    </div>
+    
     <label>Método de pago</label>
     <select id="metodo">
       <option value="efectivo">Efectivo</option>
@@ -172,6 +184,63 @@
     }
   }
 
+      document.getElementById('metodo').addEventListener('change', () => {
+  const metodo = document.getElementById('metodo').value;
+  const container = document.getElementById('vueltoContainer');
+  container.style.display = metodo === 'efectivo' ? 'block' : 'none';
+});
+
+  function calcularVuelto() {
+  const metodo = document.getElementById('metodo').value;
+  if (metodo !== 'efectivo') return;
+
+  const montoEntregado = parseFloat(document.getElementById('montoEntregadoUSD').value) || 0;
+  const precio = obtenerPrecioUSD();
+  const propinaUSD = parseFloat(document.getElementById('propinaUSD').value) || 0;
+  const totalUSD = precio + propinaUSD;
+
+  let vueltoUSD = 0;
+  let vueltoBS = 0;
+
+  if (montoEntregado > totalUSD) {
+    const vueltoTotal = montoEntregado - totalUSD;
+
+    // Simula que solo hay $1 en sencillo, el resto se da en Bs
+    const disponibleUSD = Math.min(vueltoTotal, 1); // puedes ajustar esto
+    const restanteUSD = vueltoTotal - disponibleUSD;
+    const compensadoBS = restanteUSD * tasa;
+
+    vueltoUSD = disponibleUSD;
+    vueltoBS = compensadoBS;
+  }
+
+  document.getElementById('vueltoUSD').textContent = `Vuelto en USD: $${vueltoUSD.toFixed(2)}`;
+  document.getElementById('vueltoBS').textContent = `Vuelto en Bs: Bs ${vueltoBS.toFixed(2)}`;
+      }
+
+  function calcularPagoMixto() {
+  const precio = obtenerPrecioUSD();
+  const propinaUSD = parseFloat(document.getElementById('propinaUSD').value) || 0;
+  const propinaBS = parseFloat(document.getElementById('propinaBS').value) || 0;
+  const totalUSD = precio + propinaUSD;
+
+  const entregadoUSD = parseFloat(document.getElementById('montoEntregadoUSD').value) || 0;
+  const entregadoBS = parseFloat(document.getElementById('montoEntregadoBS').value) || 0;
+
+  const entregadoUSDconvertido = entregadoBS / tasa;
+  const totalEntregadoUSD = entregadoUSD + entregadoUSDconvertido;
+
+  const estado = document.getElementById('estadoPago');
+  if (totalEntregadoUSD >= totalUSD) {
+    estado.textContent = "Estado del pago: ✅ Cubierto";
+    estado.style.color = "green";
+  } else {
+    const faltanteUSD = totalUSD - totalEntregadoUSD;
+    estado.textContent = `Estado del pago: ❌ Faltan $${faltanteUSD.toFixed(2)}`;
+    estado.style.color = "red";
+  }
+    }
+      
   function actualizarPrecio() {
     const precio = obtenerPrecioUSD();
     document.getElementById('precioUSD').textContent = `Precio en USD: $${precio.toFixed(2)}`;
@@ -179,16 +248,21 @@
   }
 
   function actualizarTotal() {
-    const precio = obtenerPrecioUSD();
-    const propinaUSD = parseFloat(document.getElementById('propinaUSD').value) || 0;
-    const propinaBS = parseFloat(document.getElementById('propinaBS').value) || 0;
-    const totalBs = ((precio + propinaUSD) * tasa + propinaBS).toFixed(2);
-    document.getElementById('totalBs').textContent = `Total en Bs: Bs ${totalBs}`;
+  const precio = obtenerPrecioUSD();
+  const propinaUSD = parseFloat(document.getElementById('propinaUSD').value) || 0;
+  const propinaBS = parseFloat(document.getElementById('propinaBS').value) || 0;
+  const totalBs = ((precio + propinaUSD) * tasa + propinaBS).toFixed(2);
+  document.getElementById('totalBs').textContent = `Total en Bs: Bs ${totalBs}`;
+  calcularVuelto();
+  calcularPagoMixto(); 
   }
 
   document.getElementById('servicio').addEventListener('change', actualizarPrecio);
   document.getElementById('propinaUSD').addEventListener('input', actualizarTotal);
   document.getElementById('propinaBS').addEventListener('input', actualizarTotal);
+  document.getElementById('montoEntregadoUSD').addEventListener('input', calcularPagoMixto);
+document.getElementById('montoEntregadoBS').addEventListener('input', calcularPagoMixto);
+document.getElementById('precioManual').addEventListener('input', calcularPagoMixto);   
 
   document.getElementById('usarOtroPrecio').addEventListener('change', () => {
     const precioManualInput = document.getElementById('precioManual');
@@ -220,6 +294,25 @@
       propina_bs: propinaBS,
       tasa
     });
+
+    // Calcular vuelto
+const montoEntregado = parseFloat(document.getElementById('montoEntregadoUSD').value) || 0;
+const totalUSD = precio + propinaUSD;
+const vueltoTotal = montoEntregado > totalUSD ? montoEntregado - totalUSD : 0;
+const vueltoUSD = Math.min(vueltoTotal, 1); // puedes ajustar el límite de sencillo
+const restanteUSD = vueltoTotal - vueltoUSD;
+const vueltoBS = restanteUSD * tasa;
+
+// Registrar el vuelto en Bs como egreso si aplica
+if (metodo === 'efectivo' && vueltoBS > 0) {
+  await supabase.from("movimientos_caja").insert([{
+    tipo: "egreso",
+    canal: "efectivo_bs",
+    monto: vueltoBS,
+    concepto: `Vuelto entregado a clienta (${servicioNombre})`,
+    responsable: "caja"
+  }]);
+      }
 
     document.getElementById('feedback').textContent = error
       ? '❌ Error al registrar el pago'
