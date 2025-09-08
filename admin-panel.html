@@ -3,25 +3,56 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Panel Administrativo - Sakura Studio</title>
+  <title>Panel Administrativo – Sakura Studio</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body {
       margin: 0;
       font-family: sans-serif;
-      background-color: #f5f5f5;
+      background-image: url('fondo-sakura.jpg');
+      background-size: cover;
+      background-position: center;
       color: #333;
+      display: flex;
+      height: 100vh;
     }
-    .container {
-      max-width: 900px;
-      margin: auto;
+    aside {
+      width: 250px;
+      background: rgba(255, 255, 255, 0.95);
       padding: 20px;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    }
+    aside img {
+      width: 100%;
+      max-width: 180px;
+      margin-bottom: 20px;
+    }
+    aside button {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px;
+      font-weight: bold;
+      background-color: #e91e63;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    main {
+      flex: 1;
+      padding: 30px;
+      overflow-y: auto;
+      background: rgba(255, 255, 255, 0.9);
+    }
+    .section {
+      margin-bottom: 40px;
     }
     h2 {
       color: #e91e63;
-      margin-top: 40px;
+      margin-bottom: 10px;
     }
-    input, select, button, textarea {
+    input, select, textarea {
       width: 100%;
       padding: 10px;
       margin: 8px 0;
@@ -29,19 +60,15 @@
       border: 1px solid #ccc;
       font-size: 16px;
     }
-    button {
+    button.action {
       background-color: #e91e63;
       color: white;
       border: none;
       font-weight: bold;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 5px;
       cursor: pointer;
-    }
-    .section {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      margin-top: 20px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.05);
     }
     .result {
       font-weight: bold;
@@ -50,116 +77,127 @@
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Panel Administrativo – Sakura Studio</h1>
+  <aside>
+    <img src="logo-sakura.png" alt="Logo Sakura" />
+    <button onclick="mostrarSeccion('tasa')">📊 Tasa Oficial</button>
+    <button onclick="mostrarSeccion('servicios')">🛎️ Servicios</button>
+    <button onclick="mostrarSeccion('trabajadoras')">👩‍💼 Trabajadoras</button>
+    <button onclick="mostrarSeccion('gastos')">💸 Gastos</button>
+    <button onclick="mostrarSeccion('liquidez')">💰 Liquidez</button>
+    <button onclick="mostrarSeccion('pagos')">📋 Pagos</button>
+    <button onclick="mostrarSeccion('cierre')">📆 Cierre Semanal</button>
+    <button onclick="mostrarSeccion('resumen')">📈 Resumen Diario</button>
+  </aside>
 
-    <!-- Tasa Oficial -->
+  <main id="panel">
+    <!-- Aquí se cargan dinámicamente las secciones -->
+  </main>
+
+  <!-- Secciones modulares -->
+  <template id="tasa">
     <div class="section">
       <h2>📊 Tasa Oficial</h2>
       <div id="tasaActual">Cargando tasa...</div>
       <label>Registrar tasa manual (solo contingencia)</label>
       <input type="number" id="tasaManual" placeholder="Ej: 150.00" />
-      <button onclick="registrarTasaManual()">Registrar tasa manual</button>
+      <button class="action" onclick="registrarTasaManual()">Registrar tasa manual</button>
       <div id="tasaFeedback"></div>
     </div>
+  </template>
 
-    <!-- Servicios -->
+  <template id="servicios">
     <div class="section">
       <h2>🛎️ Servicios</h2>
       <label>Nombre del servicio</label>
       <input type="text" id="nombreServicio" />
       <label>Precio en USD</label>
       <input type="number" id="precioServicio" />
-      <button onclick="registrarServicio()">Registrar servicio</button>
+      <button class="action" onclick="registrarServicio()">Registrar servicio</button>
       <div id="servicioFeedback"></div>
     </div>
+  </template>
 
-    <!-- Trabajadoras -->
+  <template id="trabajadoras">
     <div class="section">
       <h2>👩‍💼 Trabajadoras</h2>
       <label>Nombre</label>
       <input type="text" id="nombreTrabajadora" />
       <label>Porcentaje de ganancia</label>
       <input type="number" id="porcentajeTrabajadora" placeholder="Ej: 50" />
-      <button onclick="registrarTrabajadora()">Registrar trabajadora</button>
+      <button class="action" onclick="registrarTrabajadora()">Registrar trabajadora</button>
       <div id="trabajadoraFeedback"></div>
-  </div>
+    </div>
+  </template>
 
-    <!-- Registro de Gastos -->
+  <template id="gastos">
     <div class="section">
       <h2>💸 Registro de Gastos</h2>
       <label>Concepto del gasto</label>
-      <input type="text" id="conceptoGasto" placeholder="Ej: Compra de productos de limpieza" />
-
+      <input type="text" id="conceptoGasto" />
       <label>Monto</label>
-      <input type="number" id="montoGasto" placeholder="Ej: 250.00" />
-
+      <input type="number" id="montoGasto" />
       <label>Moneda</label>
       <select id="monedaGasto">
         <option value="usd">USD</option>
         <option value="bs">Bs</option>
       </select>
-
       <label>Tipo de gasto</label>
       <select id="tipoGasto">
         <option value="fijo">Fijo</option>
         <option value="variable">Variable</option>
       </select>
-
       <label>Número de factura</label>
-      <input type="text" id="facturaGasto" placeholder="Ej: F123456" />
-
-      <label>Últimos 4 dígitos de referencia bancaria (si fue pago móvil)</label>
-      <input type="text" id="referenciaGasto" placeholder="Ej: 4587" />
-
+      <input type="text" id="facturaGasto" />
+      <label>Referencia bancaria (últimos 4 dígitos)</label>
+      <input type="text" id="referenciaGasto" />
       <label>Responsable</label>
-      <input type="text" id="responsableGasto" placeholder="Ej: Ysai" />
-
-      <button onclick="registrarGasto()">Registrar gasto</button>
+      <input type="text" id="responsableGasto" />
+      <button class="action" onclick="registrarGasto()">Registrar gasto</button>
       <div id="gastoFeedback"></div>
-          </div>
+    </div>
+  </template>
 
-     <!-- Liquidez Actual -->
+  <template id="liquidez">
     <div class="section">
       <h2>💰 Liquidez Actual</h2>
-      <button onclick="verLiquidez()">Actualizar liquidez</button>
+      <button class="action" onclick="verLiquidez()">Actualizar liquidez</button>
       <div id="liquidezVisual">—</div>
     </div>
+  </template>
 
-    <!-- Auditoría de Pagos -->
+  <template id="pagos">
     <div class="section">
       <h2>📋 Auditoría de Pagos</h2>
-      <button onclick="verPagos()">Ver pagos recientes</button>
+      <button class="action" onclick="verPagos()">Ver pagos recientes</button>
       <div id="pagosVisual">—</div>
     </div>
+  </template>
 
-    <!-- Resumen Diario por Moneda -->
-    <div class="section">
-      <h2>📈 Ingresos por Moneda</h2>
-      <button onclick="verResumenDiario()">Ver resumen diario</button>
-      <div id="resumenDiarioVisual">—</div>
-    </div>
-
-    <!-- Cierre Semanal -->
+  <template id="cierre">
     <div class="section">
       <h2>📆 Cierre Semanal</h2>
       <label>Seleccionar trabajadora</label>
       <select id="trabajadoraCierre"></select>
-
       <label>Fecha de cierre</label>
       <input type="date" id="fechaCierre" />
-
-      <button onclick="calcularCierre()">Calcular cierre</button>
+      <button class="action" onclick="calcularCierre()">Calcular cierre</button>
       <div id="resultadoCierre">—</div>
-
       <label>Monto a entregar en USD</label>
       <input type="number" id="usdEntregadoCierre" placeholder="Ej: 80.00" />
-
-      <button onclick="registrarCierre()">Registrar cierre y egresos</button>
+      <button class="action" onclick="registrarCierre()">Registrar cierre y egresos</button>
       <div id="feedbackCierre"></div>
     </div>
+  </template>
 
-    <script type="module">
+  <template id="resumen">
+    <div class="section">
+      <h2>📈 Ingresos por Moneda</h2>
+      <button class="action" onclick="verResumenDiario()">Ver resumen diario</button>
+      <div id="resumenDiarioVisual">—</div>
+    </div>
+  </template>
+
+  <script type="module">
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
   const supabase = createClient(
@@ -167,20 +205,16 @@
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indoc3lpY3ZvZGd0bWhzb3lueXJjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY5NTI5MDcsImV4cCI6MjA3MjUyODkwN30.8NdIOa08ntLFriC4wOWhyMcOmF4Q3fLcG1rwcnZffOE"
   );
 
-  // Tasa
-  async function registrarTasaManual() {
-    const tasaManual = parseFloat(document.getElementById('tasaManual').value);
-    if (!tasaManual) return;
-    const { error } = await supabase.rpc('registrar_tasa_manual', {
-      fuente: 'manual',
-      tasa_bs_por_usd: tasaManual
-    });
-    document.getElementById('tasaFeedback').textContent = error
-      ? '❌ Error al registrar tasa'
-      : '✅ Tasa registrada correctamente';
-    verTasa();
+  function mostrarSeccion(id) {
+    const panel = document.getElementById('panel');
+    const template = document.getElementById(id);
+    panel.innerHTML = '';
+    panel.appendChild(template.content.cloneNode(true));
+    if (id === 'tasa') verTasa();
+    if (id === 'trabajadoras') cargarTrabajadorasCierre();
   }
 
+  // Tasa
   async function verTasa() {
     const { data, error } = await supabase
       .from('tasa_dia')
@@ -192,6 +226,19 @@
     document.getElementById('tasaActual').textContent = error
       ? 'Error al cargar tasa'
       : `Tasa vigente: ${data.tasa_bs_por_usd} Bs/USD (fecha: ${data.fecha})`;
+  }
+
+  async function registrarTasaManual() {
+    const tasaManual = parseFloat(document.getElementById('tasaManual').value);
+    if (!tasaManual) return;
+    const { error } = await supabase.rpc('registrar_tasa_manual', {
+      fuente: 'manual',
+      tasa_bs_por_usd: tasaManual
+    });
+    document.getElementById('tasaFeedback').textContent = error
+      ? '❌ Error al registrar tasa'
+      : '✅ Tasa registrada correctamente';
+    verTasa();
   }
 
   // Servicios
@@ -245,7 +292,7 @@
     const { data, error } = await supabase.from('liquidez_actual').select('*').single();
     document.getElementById('liquidezVisual').textContent = error
       ? '❌ Error al cargar liquidez'
-      : `Efectivo USD: $${data.efectivo_usd.toFixed(2)} | Efectivo Bs: Bs ${data.efectivo_bs.toFixed(2)} | Banco Bs: Bs ${data.banco_bs.toFixed(2)}`;
+      : `USD: $${data.efectivo_usd.toFixed(2)} | Bs: Bs ${data.efectivo_bs.toFixed(2)} | Banco Bs: Bs ${data.banco_bs.toFixed(2)}`;
   }
 
   // Pagos
@@ -264,21 +311,7 @@
     ).join('');
   }
 
-  // Resumen Diario
-  async function verResumenDiario() {
-    const { data, error } = await supabase.from('ingresos_por_moneda').select('*');
-    if (error || !data) {
-      document.getElementById('resumenDiarioVisual').textContent = '❌ Error al cargar resumen';
-      return;
-    }
-    document.getElementById('resumenDiarioVisual').innerHTML = data.map(r =>
-      `<div>📅 ${r.fecha} – USD: $${r.total_usd.toFixed(2)} – Bs: Bs ${r.total_bs.toFixed(2)}</div>`
-    ).join('');
-  }
-
-  await verTasa();
-
-      // Cierre semanal – cargar trabajadoras
+  // Cierre semanal
   async function cargarTrabajadorasCierre() {
     const { data, error } = await supabase.from('trabajadoras').select('id, nombre').eq('activo', true);
     const selector = document.getElementById('trabajadoraCierre');
@@ -295,7 +328,6 @@
     });
   }
 
-  // Calcular cierre
   let cierreCalculado = null;
 
   async function calcularCierre() {
@@ -325,7 +357,6 @@
     `;
   }
 
-  // Registrar cierre y egresos
   async function registrarCierre() {
     if (!cierreCalculado) return;
     const trabajadora = document.getElementById('trabajadoraCierre').value;
@@ -335,7 +366,6 @@
     const restanteUSD = totalUSD - usdEntregado;
     const compensadoBs = restanteUSD > 0 ? restanteUSD * cierreCalculado.tasa : 0;
 
-    // Registrar egreso en USD
     if (usdEntregado > 0) {
       await supabase.from('movimientos_caja').insert([{
         tipo: 'egreso',
@@ -346,7 +376,6 @@
       }]);
     }
 
-    // Registrar egreso compensado en Bs
     if (compensadoBs > 0) {
       await supabase.from('movimientos_caja').insert([{
         tipo: 'egreso',
@@ -357,7 +386,6 @@
       }]);
     }
 
-    // Registrar cierre institucional
     await supabase.from('cierres').insert([{
       trabajadora_id: trabajadora,
       fecha_corte: fecha,
@@ -374,7 +402,20 @@
     cierreCalculado = null;
   }
 
-  await cargarTrabajadorasCierre();
+  // Resumen diario
+  async function verResumenDiario() {
+    const { data, error } = await supabase.from('ingresos_por_moneda').select('*');
+    if (error || !data) {
+      document.getElementById('resumenDiarioVisual').textContent = '❌ Error al cargar resumen';
+      return;
+    }
+    document.getElementById('resumenDiarioVisual').innerHTML = data.map(r =>
+      `<div>📅 ${r.fecha} – USD: $${r.total_usd.toFixed(2)} – Bs: Bs ${r.total_bs.toFixed(2)}</div>`
+    ).join('');
+  }
+
+  // Inicialización
+  mostrarSeccion('tasa');
 </script>
 </body>
-  </html>
+</html>
