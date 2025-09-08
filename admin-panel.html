@@ -206,13 +206,29 @@
   );
 
   function mostrarSeccion(id) {
-    const panel = document.getElementById('panel');
-    const template = document.getElementById(id);
-    panel.innerHTML = '';
-    panel.appendChild(template.content.cloneNode(true));
-    if (id === 'tasa') verTasa();
-    if (id === 'trabajadoras') cargarTrabajadorasCierre();
+  const panel = document.getElementById('panel');
+  const template = document.getElementById(id);
+  panel.innerHTML = '';
+  panel.appendChild(template.content.cloneNode(true));
+
+  switch (id) {
+    case 'tasa':
+      verTasa();
+      break;
+    case 'trabajadoras':
+      cargarTrabajadorasCierre();
+      break;
+    case 'resumen':
+      verResumenDiario();
+      break;
+    case 'liquidez':
+      verLiquidez();
+      break;
+    case 'pagos':
+      verPagos();
+      break;
   }
+    }
 
   // Tasa
   async function verTasa() {
@@ -415,7 +431,7 @@
   }
 
   // Inicialización
-  mostrarSeccion('tasa');
+  mostrarSeccion('resumen');
 </script>
 </body>
 </html>
