@@ -206,31 +206,30 @@
   );
 
   function mostrarSeccion(id) {
-  const panel = document.getElementById('panel');
-  const template = document.getElementById(id);
-  panel.innerHTML = '';
-  panel.appendChild(template.content.cloneNode(true));
+    const panel = document.getElementById('panel');
+    const template = document.getElementById(id);
+    panel.innerHTML = '';
+    panel.appendChild(template.content.cloneNode(true));
 
-  switch (id) {
-    case 'tasa':
-      verTasa();
-      break;
-    case 'trabajadoras':
-      cargarTrabajadorasCierre();
-      break;
-    case 'resumen':
-      verResumenDiario();
-      break;
-    case 'liquidez':
-      verLiquidez();
-      break;
-    case 'pagos':
-      verPagos();
-      break;
-  }
+    switch (id) {
+      case 'tasa':
+        verTasa();
+        break;
+      case 'trabajadoras':
+        cargarTrabajadorasCierre();
+        break;
+      case 'resumen':
+        verResumenDiario();
+        break;
+      case 'liquidez':
+        verLiquidez();
+        break;
+      case 'pagos':
+        verPagos();
+        break;
     }
+  }
 
-  // Tasa
   async function verTasa() {
     const { data, error } = await supabase
       .from('tasa_dia')
@@ -257,7 +256,6 @@
     verTasa();
   }
 
-  // Servicios
   async function registrarServicio() {
     const nombre = document.getElementById('nombreServicio').value;
     const precio = parseFloat(document.getElementById('precioServicio').value);
@@ -268,7 +266,6 @@
       : '✅ Servicio registrado correctamente';
   }
 
-  // Trabajadoras
   async function registrarTrabajadora() {
     const nombre = document.getElementById('nombreTrabajadora').value;
     const porcentaje = parseFloat(document.getElementById('porcentajeTrabajadora').value);
@@ -279,7 +276,6 @@
       : '✅ Trabajadora registrada correctamente';
   }
 
-  // Gastos
   async function registrarGasto() {
     const concepto = document.getElementById('conceptoGasto').value;
     const monto = parseFloat(document.getElementById('montoGasto').value);
@@ -303,7 +299,6 @@
       : '✅ Gasto registrado correctamente';
   }
 
-  // Liquidez
   async function verLiquidez() {
     const { data, error } = await supabase.from('liquidez_actual').select('*').single();
     document.getElementById('liquidezVisual').textContent = error
@@ -311,7 +306,6 @@
       : `USD: $${data.efectivo_usd.toFixed(2)} | Bs: Bs ${data.efectivo_bs.toFixed(2)} | Banco Bs: Bs ${data.banco_bs.toFixed(2)}`;
   }
 
-  // Pagos
   async function verPagos() {
     const { data, error } = await supabase
       .from('pagos')
@@ -327,7 +321,6 @@
     ).join('');
   }
 
-  // Cierre semanal
   async function cargarTrabajadorasCierre() {
     const { data, error } = await supabase.from('trabajadoras').select('id, nombre').eq('activo', true);
     const selector = document.getElementById('trabajadoraCierre');
@@ -418,7 +411,6 @@
     cierreCalculado = null;
   }
 
-  // Resumen diario
   async function verResumenDiario() {
     const { data, error } = await supabase.from('ingresos_por_moneda').select('*');
     if (error || !data) {
@@ -430,10 +422,10 @@
     ).join('');
   }
 
-  // Inicialización
   window.addEventListener('DOMContentLoaded', () => {
-  mostrarSeccion('resumen');
-});
+    mostrarSeccion('resumen');
+  });
 </script>
+      
 </body>
 </html>
