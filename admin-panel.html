@@ -78,15 +78,16 @@
 </head>
 <body>
   <aside>
-    <img src="logo-sakura.png" alt="Logo Sakura" />
-    <button onclick="mostrarSeccion('tasa')">📊 Tasa Oficial</button>
-    <button onclick="mostrarSeccion('servicios')">🛎️ Servicios</button>
-    <button onclick="mostrarSeccion('trabajadoras')">👩‍💼 Trabajadoras</button>
-    <button onclick="mostrarSeccion('gastos')">💸 Gastos</button>
-    <button onclick="mostrarSeccion('liquidez')">💰 Liquidez</button>
-    <button onclick="mostrarSeccion('pagos')">📋 Pagos</button>
-    <button onclick="mostrarSeccion('cierre')">📆 Cierre Semanal</button>
-    <button onclick="mostrarSeccion('resumen')">📈 Resumen Diario</button>
+  <img src="logo-sakura.png" alt="Logo Sakura" />
+
+  <button id="btn-tasa">📊 Tasa Oficial</button>
+  <button id="btn-servicios">🛎️ Servicios</button>
+  <button id="btn-trabajadoras">👩‍💼 Trabajadoras</button>
+  <button id="btn-gastos">💸 Gastos</button>
+  <button id="btn-liquidez">💰 Liquidez</button>
+  <button id="btn-pagos">📋 Pagos</button>
+  <button id="btn-cierre">📆 Cierre Semanal</button>
+  <button id="btn-resumen">📈 Resumen Diario</button>
   </aside>
 
   <main id="panel">
@@ -423,8 +424,17 @@
   }
 
   window.addEventListener('DOMContentLoaded', () => {
-    mostrarSeccion('resumen');
-  });
+  mostrarSeccion('resumen');
+
+  document.getElementById('btn-tasa').addEventListener('click', () => mostrarSeccion('tasa'));
+  document.getElementById('btn-servicios').addEventListener('click', () => mostrarSeccion('servicios'));
+  document.getElementById('btn-trabajadoras').addEventListener('click', () => mostrarSeccion('trabajadoras'));
+  document.getElementById('btn-gastos').addEventListener('click', () => mostrarSeccion('gastos'));
+  document.getElementById('btn-liquidez').addEventListener('click', () => mostrarSeccion('liquidez'));
+  document.getElementById('btn-pagos').addEventListener('click', () => mostrarSeccion('pagos'));
+  document.getElementById('btn-cierre').addEventListener('click', () => mostrarSeccion('cierre'));
+  document.getElementById('btn-resumen').addEventListener('click', () => mostrarSeccion('resumen'));
+});
 </script>      
 </body>
 </html>
