@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel Administrativo - Sakura Studio</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background-color: #f5f5f5;
+      color: #333;
+    }
+    .container {
+      max-width: 900px;
+      margin: auto;
+      padding: 20px;
+    }
+    h2 {
+      color: #e91e63;
+      margin-top: 40px;
+    }
+    input, select, button, textarea {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    button {
+      background-color: #e91e63;
+      color: white;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .section {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-top: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+    .result {
+      font-weight: bold;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Panel Administrativo – Sakura Studio</h1>
+
+    <!-- Tasa Oficial -->
+    <div class="section">
+      <h2>📊 Tasa Oficial</h2>
+      <div id="tasaActual">Cargando tasa...</div>
+      <label>Registrar tasa manual (solo contingencia)</label>
+      <input type="number" id="tasaManual" placeholder="Ej: 150.00" />
+      <button onclick="registrarTasaManual()">Registrar tasa manual</button>
+      <div id="tasaFeedback"></div>
+    </div>
+
+    <!-- Servicios -->
+    <div class="section">
+      <h2>🛎️ Servicios</h2>
+      <label>Nombre del servicio</label>
+      <input type="text" id="nombreServicio" />
+      <label>Precio en USD</label>
+      <input type="number" id="precioServicio" />
+      <button onclick="registrarServicio()">Registrar servicio</button>
+      <div id="servicioFeedback"></div>
+    </div>
+
+    <!-- Trabajadoras -->
+    <div class="section">
+      <h2>👩‍💼 Trabajadoras</h2>
+      <label>Nombre</label>
+      <input type="text" id="nombreTrabajadora" />
+      <label>Porcentaje de ganancia</label>
+      <input type="number" id="porcentajeTrabajadora" placeholder="Ej: 50" />
+      <button onclick="registrarTrabajadora()">Registrar trabajadora</button>
+      <div id="trabajadoraFeedback"></div>
+  </div>
+
+    <!-- Registro de Gastos -->
+    <div class="section">
+      <h2>💸 Registro de Gastos</h2>
+      <label>Concepto del gasto</label>
+      <input type="text" id="conceptoGasto" placeholder="Ej: Compra de productos de limpieza" />
+
+      <label>Monto</label>
+      <input type="number" id="montoGasto" placeholder="Ej: 250.00" />
+
+      <label>Moneda</label>
+      <select id="monedaGasto">
+        <option value="usd">USD</option>
+        <option value="bs">Bs</option>
+      </select>
+
+      <label>Tipo de gasto</label>
+      <select id="tipoGasto">
+        <option value="fijo">Fijo</option>
+        <option value="variable">Variable</option>
+      </select>
+
+      <label>Número de factura</label>
+      <input type="text" id="facturaGasto" placeholder="Ej: F123456" />
+
+      <label>Últimos 4 dígitos de referencia bancaria (si fue pago móvil)</label>
+      <input type="text" id="referenciaGasto" placeholder="Ej: 4587" />
+
+      <label>Responsable</label>
+      <input type="text" id="responsableGasto" placeholder="Ej: Ysai" />
+
+      <button onclick="registrarGasto()">Registrar gasto</button>
+      <div id="gastoFeedback"></div>
+          </div>
+
+     <!-- Liquidez Actual -->
+    <div class="section">
+      <h2>💰 Liquidez Actual</h2>
+      <button onclick="verLiquidez()">Actualizar liquidez</button>
+      <div id="liquidezVisual">—</div>
+    </div>
+
+    <!-- Auditoría de Pagos -->
+    <div class="section">
+      <h2>📋 Auditoría de Pagos</h2>
+      <button onclick="verPagos()">Ver pagos recientes</button>
+      <div id="pagosVisual">—</div>
+    </div>
+
+    <!-- Resumen Diario por Moneda -->
+    <div class="section">
+      <h2>📈 Ingresos por Moneda</h2>
+      <button onclick="verResumenDiario()">Ver resumen diario</button>
+      <div id="resumenDiarioVisual">—</div>
+    </div>
+
+    <!-- Cierre Semanal -->
+    <div class="section">
+      <h2>📆 Cierre Semanal</h2>
+      <label>Seleccionar trabajadora</label>
+      <select id="trabajadoraCierre"></select>
+
+      <label>Fecha de cierre</label>
+      <input type="date" id="fechaCierre" />
+
+      <button onclick="calcularCierre()">Calcular cierre</button>
+      <div id="resultadoCierre">—</div>
+
+      <label>Monto a entregar en USD</label>
+      <input type="number" id="usdEntregadoCierre" placeholder="Ej: 80.00" />
+
+      <button onclick="registrarCierre()">Registrar cierre y egresos</button>
+      <div id="feedbackCierre"></div>
+    </div>
+
+    <script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+  const supabase = createClient(
+    "https://whsyicvodgtmhsoynyrc.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indoc3lpY3ZvZGd0bWhzb3lueXJjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY5NTI5MDcsImV4cCI6MjA3MjUyODkwN30.8NdIOa08ntLFriC4wOWhyMcOmF4Q3fLcG1rwcnZffOE"
+  );
+
+  // Tasa
+  async function registrarTasaManual() {
+    const tasaManual = parseFloat(document.getElementById('tasaManual').value);
+    if (!tasaManual) return;
+    const { error } = await supabase.rpc('registrar_tasa_manual', {
+      fuente: 'manual',
+      tasa_bs_por_usd: tasaManual
+    });
+    document.getElementById('tasaFeedback').textContent = error
+      ? '❌ Error al registrar tasa'
+      : '✅ Tasa registrada correctamente';
+    verTasa();
+  }
+
+  async function verTasa() {
+    const { data, error } = await supabase
+      .from('tasa_dia')
+      .select('tasa_bs_por_usd, fecha')
+      .eq('tipo_uso', 'operativo')
+      .order('fecha', { ascending: false })
+      .limit(1)
+      .single();
+    document.getElementById('tasaActual').textContent = error
+      ? 'Error al cargar tasa'
+      : `Tasa vigente: ${data.tasa_bs_por_usd} Bs/USD (fecha: ${data.fecha})`;
+  }
+
+  // Servicios
+  async function registrarServicio() {
+    const nombre = document.getElementById('nombreServicio').value;
+    const precio = parseFloat(document.getElementById('precioServicio').value);
+    if (!nombre || !precio) return;
+    const { error } = await supabase.from('servicios').insert([{ nombre, precio_usd: precio }]);
+    document.getElementById('servicioFeedback').textContent = error
+      ? '❌ Error al registrar servicio'
+      : '✅ Servicio registrado correctamente';
+  }
+
+  // Trabajadoras
+  async function registrarTrabajadora() {
+    const nombre = document.getElementById('nombreTrabajadora').value;
+    const porcentaje = parseFloat(document.getElementById('porcentajeTrabajadora').value);
+    if (!nombre || !porcentaje) return;
+    const { error } = await supabase.from('trabajadoras').insert([{ nombre, porcentaje_ganancia: porcentaje }]);
+    document.getElementById('trabajadoraFeedback').textContent = error
+      ? '❌ Error al registrar trabajadora'
+      : '✅ Trabajadora registrada correctamente';
+  }
+
+  // Gastos
+  async function registrarGasto() {
+    const concepto = document.getElementById('conceptoGasto').value;
+    const monto = parseFloat(document.getElementById('montoGasto').value);
+    const moneda = document.getElementById('monedaGasto').value;
+    const tipo = document.getElementById('tipoGasto').value;
+    const factura = document.getElementById('facturaGasto').value;
+    const referencia_bancaria = document.getElementById('referenciaGasto').value;
+    const responsable = document.getElementById('responsableGasto').value;
+    if (!concepto || !monto || !moneda || !tipo || !responsable) return;
+    const { error } = await supabase.from('egresos').insert([{
+      concepto,
+      monto,
+      moneda,
+      tipo,
+      factura,
+      referencia_bancaria,
+      responsable
+    }]);
+    document.getElementById('gastoFeedback').textContent = error
+      ? '❌ Error al registrar gasto'
+      : '✅ Gasto registrado correctamente';
+  }
+
+  // Liquidez
+  async function verLiquidez() {
+    const { data, error } = await supabase.from('liquidez_actual').select('*').single();
+    document.getElementById('liquidezVisual').textContent = error
+      ? '❌ Error al cargar liquidez'
+      : `Efectivo USD: $${data.efectivo_usd.toFixed(2)} | Efectivo Bs: Bs ${data.efectivo_bs.toFixed(2)} | Banco Bs: Bs ${data.banco_bs.toFixed(2)}`;
+  }
+
+  // Pagos
+  async function verPagos() {
+    const { data, error } = await supabase
+      .from('pagos')
+      .select('created_at, servicio, monto_usd, moneda, metodo_pago, trabajadora, monto_entregado_usd, monto_entregado_bs, vuelto_bs')
+      .order('created_at', { ascending: false })
+      .limit(10);
+    if (error || !data) {
+      document.getElementById('pagosVisual').textContent = '❌ Error al cargar pagos';
+      return;
+    }
+    document.getElementById('pagosVisual').innerHTML = data.map(p =>
+      `<div>🧾 ${p.created_at.split('T')[0]} – ${p.servicio} – $${p.monto_usd} – ${p.moneda} – ${p.metodo_pago} – Vuelto Bs: ${p.vuelto_bs || 0}</div>`
+    ).join('');
+  }
+
+  // Resumen Diario
+  async function verResumenDiario() {
+    const { data, error } = await supabase.from('ingresos_por_moneda').select('*');
+    if (error || !data) {
+      document.getElementById('resumenDiarioVisual').textContent = '❌ Error al cargar resumen';
+      return;
+    }
+    document.getElementById('resumenDiarioVisual').innerHTML = data.map(r =>
+      `<div>📅 ${r.fecha} – USD: $${r.total_usd.toFixed(2)} – Bs: Bs ${r.total_bs.toFixed(2)}</div>`
+    ).join('');
+  }
+
+  await verTasa();
+
+      // Cierre semanal – cargar trabajadoras
+  async function cargarTrabajadorasCierre() {
+    const { data, error } = await supabase.from('trabajadoras').select('id, nombre').eq('activo', true);
+    const selector = document.getElementById('trabajadoraCierre');
+    if (error || !data) {
+      selector.innerHTML = '<option>Error al cargar</option>';
+      return;
+    }
+    selector.innerHTML = '';
+    data.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t.id;
+      opt.textContent = t.nombre;
+      selector.appendChild(opt);
+    });
+  }
+
+  // Calcular cierre
+  let cierreCalculado = null;
+
+  async function calcularCierre() {
+    const trabajadora = document.getElementById('trabajadoraCierre').value;
+    const fecha = document.getElementById('fechaCierre').value;
+    if (!trabajadora || !fecha) return;
+
+    const { data, error } = await supabase.rpc('calcular_cierre_trabajadora', {
+      trabajadora_id: trabajadora,
+      fecha_corte: fecha
+    });
+
+    if (error || !data) {
+      document.getElementById('resultadoCierre').textContent = '❌ Error al calcular cierre';
+      cierreCalculado = null;
+      return;
+    }
+
+    cierreCalculado = data;
+    const totalUSD = data.comision_usd + data.propina_usd;
+    const totalBs = data.propina_bs;
+    document.getElementById('resultadoCierre').innerHTML = `
+      Comisión USD: $${data.comision_usd.toFixed(2)}<br>
+      Propina USD: $${data.propina_usd.toFixed(2)}<br>
+      Propina Bs: Bs ${data.propina_bs.toFixed(2)}<br>
+      Total a pagar: $${totalUSD.toFixed(2)} + Bs ${totalBs.toFixed(2)}
+    `;
+  }
+
+  // Registrar cierre y egresos
+  async function registrarCierre() {
+    if (!cierreCalculado) return;
+    const trabajadora = document.getElementById('trabajadoraCierre').value;
+    const fecha = document.getElementById('fechaCierre').value;
+    const usdEntregado = parseFloat(document.getElementById('usdEntregadoCierre').value) || 0;
+    const totalUSD = cierreCalculado.comision_usd + cierreCalculado.propina_usd;
+    const restanteUSD = totalUSD - usdEntregado;
+    const compensadoBs = restanteUSD > 0 ? restanteUSD * cierreCalculado.tasa : 0;
+
+    // Registrar egreso en USD
+    if (usdEntregado > 0) {
+      await supabase.from('movimientos_caja').insert([{
+        tipo: 'egreso',
+        canal: 'efectivo_usd',
+        monto: usdEntregado,
+        concepto: `Pago cierre semanal a trabajadora`,
+        responsable: 'admin'
+      }]);
+    }
+
+    // Registrar egreso compensado en Bs
+    if (compensadoBs > 0) {
+      await supabase.from('movimientos_caja').insert([{
+        tipo: 'egreso',
+        canal: 'efectivo_bs',
+        monto: compensadoBs,
+        concepto: `Compensación cierre semanal en Bs`,
+        responsable: 'admin'
+      }]);
+    }
+
+    // Registrar cierre institucional
+    await supabase.from('cierres').insert([{
+      trabajadora_id: trabajadora,
+      fecha_corte: fecha,
+      comision_usd: cierreCalculado.comision_usd,
+      propina_usd: cierreCalculado.propina_usd,
+      propina_bs: cierreCalculado.propina_bs,
+      usd_entregado: usdEntregado,
+      bs_compensado: compensadoBs,
+      tasa: cierreCalculado.tasa,
+      responsable: 'admin'
+    }]);
+
+    document.getElementById('feedbackCierre').textContent = '✅ Cierre registrado correctamente';
+    cierreCalculado = null;
+  }
+
+  await cargarTrabajadorasCierre();
+</script>
+</body>
+  </html>
